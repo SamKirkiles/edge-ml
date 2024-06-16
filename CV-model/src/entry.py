@@ -185,12 +185,13 @@ def evaluate(x):
 
 		return A4
 
-
 # Allows the model to consume the queue of images
 async def on_queue(batch, env, ctx):
 	for message in batch.messages:
 		image = message.body.image
-		print(evaluate([image]))
+		# Store the output in workers KV
+		print(message.body.UUID, evaluate([image]))
+		await env.AIMICRO.put(str(message.body.UUID), str(evaluate([image])))
 
 async def on_fetch(request, env):
 
