@@ -188,21 +188,20 @@ def evaluate(x):
 # Allows the model to consume the queue of images
 async def on_queue(batch, env, ctx):
 	for message in batch.messages:
+		
 		image = message.body.image
+
 		# Store the output in workers KV
-		print(message.body.UUID, evaluate([image]))
 		await env.AIMICRO.put(str(message.body.UUID), str(evaluate([image])))
 
 async def on_fetch(request, env):
 
 	# Load in the image
-	image = await request.formData()
-	x = [json.loads(image['image'])]
+	#image = await request.formData()
+	#x = [json.loads(image['image'])]
 
 	# Dimensions of the image
-	result = evaluate(x)
+	#result = evaluate(x)
 
-	return Response.new(result)
+	return Response.new("hii")
 
-async def eval(request, env):
-	return Response.new("Classification")
