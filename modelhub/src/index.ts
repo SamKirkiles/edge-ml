@@ -1,15 +1,7 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+type Environment = {
+	readonly IMAGE_QUEUE: Queue;
+  };
+  
 
 export default {
 
@@ -28,9 +20,15 @@ export default {
 			body: formdata,
 			redirect: "follow"
 		};
-
-		var output = await fetch("http://localhost:58596?name=", requestOptions)
-
-		return new Response(output.body);
+		
+		// Use a queue to read the data 
+		await env.IMAGE_QUEUE.send({
+			url: request.url,
+			method: request.method,
+			headers: Object.fromEntries(request.headers),
+		  });
+		
+		// Return a UUID to lookup in KV
+		return new Response(crypto.randomUUID());
 	},
 };

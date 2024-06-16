@@ -186,6 +186,9 @@ def evaluate(x):
 		return A4
 
 
+# Allows the model to consume the queue of images
+async def on_queue(batch, env, ctx):
+	print("Queue received!!!", batch)
 
 async def on_fetch(request, env):
 
@@ -197,7 +200,6 @@ async def on_fetch(request, env):
 	result = evaluate(x)
 
 	return Response.new(result)
-
 
 async def eval(request, env):
 	return Response.new("Classification")
