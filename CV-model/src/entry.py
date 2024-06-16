@@ -188,7 +188,9 @@ def evaluate(x):
 
 # Allows the model to consume the queue of images
 async def on_queue(batch, env, ctx):
-	print("Queue received!!!", batch)
+	for message in batch.messages:
+		image = message.body.image
+		print(evaluate([image]))
 
 async def on_fetch(request, env):
 
