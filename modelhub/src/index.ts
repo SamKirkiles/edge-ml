@@ -35,6 +35,7 @@ export default {
 			
 			// Send imge to model evaluation queue
 			await env.IMAGE_QUEUE.send(payload, {'content-type': 'json'});
+
 			// Return a UUID to lookup in KV
 			return new Response(UUID);	
 		}

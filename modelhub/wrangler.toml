@@ -82,7 +82,7 @@ id = "69cb6d2d7d554cbe85a48e5435579a07"
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
 [[queues.producers]]
 binding = "IMAGE_QUEUE"
-queue = "image-queue"
+queue = "backup-image-queue"
 
 # Bind a Queue consumer. Queue Consumers can retrieve tasks scheduled by Producers to act on them.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues

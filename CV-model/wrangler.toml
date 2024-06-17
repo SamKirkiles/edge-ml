@@ -87,7 +87,7 @@ id = "69cb6d2d7d554cbe85a48e5435579a07"
 # Bind a Queue consumer. Queue Consumers can retrieve tasks scheduled by Producers to act on them.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
 [[queues.consumers]]
-queue = "image-queue"
+queue = "backup-image-queue"
 max_batch_size = 10
 
 # Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
