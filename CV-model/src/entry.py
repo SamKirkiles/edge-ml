@@ -7,15 +7,13 @@ import math
 import json
 import http.client
 
-
 def conv_forward(x,weight,b,parameters):
 
 	pad = parameters['pad']
 	stride = parameters['stride']
 
 	(m, n_h, n_w, n_C_prev) = (len(x), len(x[0]), len(x[0][0]), len(x[0][0][0]))
-	
-	(f,f, n_C_prev, n_C) = (len(weight), len(weight[0]), len(weight[0][0]), len(weight[0][0][0]))
+	(f, f, n_C_prev, n_C) = (len(weight), len(weight[0]), len(weight[0][0]), len(weight[0][0][0]))
 
 	n_H = int(1 + (n_h + 2 * pad - f) / stride)
 	n_W = int(1 + (n_w + 2 * pad - f) / stride)
@@ -69,6 +67,7 @@ def batchnorm(x, running_mu, running_sigma):
 	return x
 
 def relu(x):
+
 	for i in range(len(x)):
 		for j in range(len(x[0])):
 			for k in range(len(x[0][0])):
@@ -82,7 +81,7 @@ def max_pooling(prev_layer, filter_size=2):
 
 	stride = 2
 
-	# with max pooling I dont want overlapping filters so make stride = filter size
+	# With max pooling I dont want overlapping filters so make stride = filter size
 	n_H = int((n_H_prev - filter_size)/filter_size + 1)
 	n_W = int((n_W_prev - filter_size)/filter_size + 1)
 
@@ -117,6 +116,8 @@ def fully_connected(prev_layer, w,b):
 
 
 def softmax(z):
+
+	# Softmax term
 	for i in range(len(z)):
 		row_sum = 0
 		for j in range(len(z[0])):
@@ -127,16 +128,20 @@ def softmax(z):
 			
 	return z
 
+def preprocess(x):
+	
+	# Preprocessing step on the input
+	(m, n_h, n_w, n_C_prev) = (len(x), len(x[0]), len(x[0][0]), len(x[0][0][0]))
+	
+	for i in range(m):
+		for h in range(n_h):
+			for w in range(n_w):
+				for c in range(n_C_prev):
+					x[i][h][w][c] = x[i][h][w][c] - 0.43326861213235296
+
 def evaluate(x, weights):
 
-		# Preprocessing step on the input
-		(m, n_h, n_w, n_C_prev) = (len(x), len(x[0]), len(x[0][0]), len(x[0][0][0]))
-		
-		for i in range(m):
-			for h in range(n_h):
-				for w in range(n_w):
-					for c in range(n_C_prev):
-						x[i][h][w][c] = x[i][h][w][c] - 0.43326861213235296
+		preprocess(x)
 
 		# Forward pass of the model 
 		Z1 = conv_forward(x,weights["W1"],weights["B1"],{'pad':1,'stride':1})
@@ -168,7 +173,7 @@ def evaluate(x, weights):
 
 		return A4
 
-# Allows the model to consume the queue of images
+
 async def on_queue(batch, env, ctx):
 
 	weights = {
