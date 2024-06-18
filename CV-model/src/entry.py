@@ -209,10 +209,20 @@ async def on_queue(batch, env, ctx):
 		"running_sigma_2": json.loads(await env.AIMICRO.get("running_sigma_2")),
 		"running_sigma_3": json.loads(await env.AIMICRO.get("running_sigma_3"))
 	}
+	
+	keys = []
+	batch = []
+	batch_length = len(batch.messages)
 
 	for message in batch.messages:
 		image = json.loads(message.body.image)
-		await env.AIMICRO.put(str(message.body.UUID), str(evaluate([image], weights)))
+		keys.append(message.body.UUID)
+		batch.append(image)
+
+	output = evaluate(batch, weights)
+	
+	for i in range(batch_length):
+		await env.AIMICRO.put(str(keys[i]), str(output[i]))
 		
 
 async def on_fetch(request, env):
