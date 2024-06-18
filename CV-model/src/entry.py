@@ -7,18 +7,24 @@ import math
 import json
 import http.client
 
+
+def shape(x):
+	return (len(x), len(x[0]), len(x[0][0]), len(x[0][0][0]))
+
+
 def conv_forward(x,weight,b,parameters):
 
 	pad = parameters['pad']
 	stride = parameters['stride']
 
-	(m, n_h, n_w, n_C_prev) = (len(x), len(x[0]), len(x[0][0]), len(x[0][0][0]))
-	(f, f, n_C_prev, n_C) = (len(weight), len(weight[0]), len(weight[0][0]), len(weight[0][0][0]))
+	(m, n_h, n_w, n_C_prev) = shape(x)
+	(f, f, n_C_prev, n_C) = shape(weight)
 
 	n_H = int(1 + (n_h + 2 * pad - f) / stride)
 	n_W = int(1 + (n_w + 2 * pad - f) / stride)
 
-	samples, x_width, y_height, channels = (len(x), len(x[0]), len(x[0][0]), len(x[0][0][0]))
+	samples, x_width, y_height, channels = shape(x)
+
 	x_prev_pad = [[[[0 for _ in range(channels)] for _ in range(y_height + 2*pad)] for _ in range(x_width + 2*pad)] for _ in range(samples)]
 
 	# Padding operation (expensive but fine when i is small)
@@ -52,9 +58,11 @@ def conv_forward(x,weight,b,parameters):
 						Z[i][h][w][c] += b[c]
 	return Z
 
+
 def batchnorm(x, running_mu, running_sigma):
 
-	m,h,w,c = (len(x), len(x[0]), len(x[0][0]), len(x[0][0][0]))
+	m,h,w,c = shape(x)
+
 	mu = [[[running_mu]]]
 	sigma = [[[running_sigma]]]
 
@@ -66,6 +74,7 @@ def batchnorm(x, running_mu, running_sigma):
 
 	return x
 
+
 def relu(x):
 
 	for i in range(len(x)):
@@ -75,9 +84,10 @@ def relu(x):
 					x[i][j][k][l] = max(0, x[i][j][k][l])
 	return x
 
+
 def max_pooling(prev_layer, filter_size=2):
 
-	(m, n_H_prev, n_W_prev, channels) = (len(prev_layer),len(prev_layer[0]), len(prev_layer[0][0]), len(prev_layer[0][0][0]))
+	(m, n_H_prev, n_W_prev, channels) = shape(prev_layer)
 
 	stride = 2
 
@@ -131,7 +141,7 @@ def softmax(z):
 def preprocess(x):
 	
 	# Preprocessing step on the input
-	(m, n_h, n_w, n_C_prev) = (len(x), len(x[0]), len(x[0][0]), len(x[0][0][0]))
+	(m, n_h, n_w, n_C_prev) = shape(x)
 	
 	for i in range(m):
 		for h in range(n_h):
@@ -139,36 +149,43 @@ def preprocess(x):
 				for c in range(n_C_prev):
 					x[i][h][w][c] = x[i][h][w][c] - 0.43326861213235296
 
+def final_layer_reshape(Pool3):
+
+	(a0, a1, a2, a3) = shape(Pool3)
+	pool3_reshape = [[] for _ in range(a0)]
+
+	for i in range(a0):
+		for j in range(a1):
+			for k in range(a2):
+				for l in range(a3):
+					pool3_reshape[i].append(Pool3[i][j][k][l]) 
+
+	return pool3_reshape
+
 def evaluate(x, weights):
 
 		preprocess(x)
 
-		# Forward pass of the model 
+		# Layer 1
 		Z1 = conv_forward(x,weights["W1"],weights["B1"],{'pad':1,'stride':1})
 		BN1 = batchnorm(Z1, weights["running_mu_1"], weights["running_sigma_1"])
 		A1 = relu(BN1)
 		Pool1 = max_pooling(A1,2)
+		# Layer 2
 		Z2 = conv_forward(Pool1,weights["W2"],weights["B2"],{'pad':1,'stride':1})
 		BN2 = batchnorm(Z2, weights["running_mu_2"], weights["running_sigma_2"])
 		A2 = relu(BN2)
 		Pool2 = max_pooling(A2,2)
+		# Layer 3
 		Z3 = conv_forward(Pool2,weights["W3"],weights["B3"],{'pad':1,'stride':1})
 		BN3 = batchnorm(Z3, weights["running_mu_3"], weights["running_sigma_3"])
 		A3 = relu(BN3)
 		Pool3 = max_pooling(A3,2)
-
-		# This needs to be in numpy code
-		(a0, a1, a2, a3) = (len(Pool3), len(Pool3[0]), len(Pool3[0][0]), len(Pool3[0][0][0]))
-		pool3_reshape = [[] for _ in range(a0)]
-
-		for i in range(a0):
-			for j in range(a1):
-				for k in range(a2):
-					for l in range(a3):
-						pool3_reshape[i].append(Pool3[i][j][k][l]) 
-
+		pool3_reshape = final_layer_reshape(Pool3)
+		# Final Layer 
 		Z4 = fully_connected(pool3_reshape, weights["W4"], weights["B4"])
 
+		# Softmax Layer 
 		A4 = softmax(Z4)
 
 		return A4
